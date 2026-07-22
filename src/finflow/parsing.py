@@ -16,7 +16,7 @@ def parse_transaction(row: dict[str, str]) -> Transaction:
     )
 
 def read_transactions(file_path: Path) -> list[Transaction]:
-    transactions:list[Transaction] = []
+    transactions: list[Transaction] = []
 
     with file_path.open(encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
