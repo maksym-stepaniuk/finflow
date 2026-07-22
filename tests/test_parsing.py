@@ -8,8 +8,9 @@ from finflow.models import Transaction
 from finflow.parsing import parse_transaction, read_transactions
 
 
-def test_parse_transaction_converts_csv_row_to_transaction():
-    row = {
+@pytest.fixture
+def transaction_row() -> dict[str, str]:
+    return {
         "transaction_id": "txn-001",
         "transaction_date": "2026-06-01",
         "description": "    SPOTIFY",
@@ -18,7 +19,11 @@ def test_parse_transaction_converts_csv_row_to_transaction():
         "account_id": "checking-pln",
     }
 
-    transaction = parse_transaction(row)
+
+def test_parse_transaction_converts_csv_row_to_transaction(
+    transaction_row: dict[str, str],
+):
+    transaction = parse_transaction(transaction_row)
 
     assert transaction == Transaction(
         transaction_id="txn-001",
@@ -56,16 +61,9 @@ def test_parse_transaction_raises_custom_error_for_invalid_value(
     field: str,
     invalid_value: str,
     expected_message: str,
+    transaction_row: dict[str, str],
 ):
-    row = {
-        "transaction_id": "txn-001",
-        "transaction_date": "2026-06-01",
-        "description": "SPOTIFY",
-        "amount": "-23.99",
-        "currency": "PLN",
-        "account_id": "checking-pln",
-    }
-    row[field] = invalid_value
+    transaction_row[field] = invalid_value
 
     with pytest.raises(TransactionParseError, match=expected_message):
-        parse_transaction(row)
+        parse_transaction(transaction_row)
