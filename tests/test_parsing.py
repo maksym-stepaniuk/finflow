@@ -1,8 +1,12 @@
-from finflow.models import Transaction
 from datetime import date
 from decimal import Decimal
-from finflow.parsing import parse_transaction
-from finflow.parsing import read_transactions
+
+import pytest
+
+from finflow.exceptions import TransactionParseError
+from finflow.models import Transaction
+from finflow.parsing import parse_transaction, read_transactions
+
 
 def test_parse_transaction_converts_csv_row_to_transaction():
     row = {
@@ -11,7 +15,7 @@ def test_parse_transaction_converts_csv_row_to_transaction():
         "description": "    SPOTIFY",
         "amount": "-23.99",
         "currency": "pln   ",
-        "account_id": "checking-pln"
+        "account_id": "checking-pln",
     }
 
     transaction = parse_transaction(row)
@@ -22,15 +26,16 @@ def test_parse_transaction_converts_csv_row_to_transaction():
         description="SPOTIFY",
         amount=Decimal("-23.99"),
         currency="PLN",
-        account_id="checking-pln"
+        account_id="checking-pln",
     )
+
 
 def test_read_transactions_reads_csv_file(tmp_path):
     csv_file = tmp_path / "examples.csv"
     csv_file.write_text(
         "transaction_id,transaction_date,description,amount,currency,account_id\n"
         "txn-202606-005,2026-06-04,SPOTIFY,-23.99,PLN,checking-pln\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     transactions = read_transactions(csv_file)
@@ -38,3 +43,17 @@ def test_read_transactions_reads_csv_file(tmp_path):
     assert len(transactions) == 1
     assert transactions[0].amount == Decimal("-23.99")
     assert transactions[0].currency == "PLN"
+
+
+def test_parse_transaction_raises_custom_error_for_invalid_amount():
+    row = {
+        "transaction_id": "txn-001",
+        "transaction_date": "2026-06-01",
+        "description": "SPOTIFY",
+        "amount": "not-a-number",
+        "currency": "PLN",
+        "account_id": "checking-pln",
+    }
+
+    with pytest.raises(TransactionParseError, match="Invalid amount"):
+        parse_transaction(row)
