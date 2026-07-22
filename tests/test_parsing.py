@@ -45,15 +45,27 @@ def test_read_transactions_reads_csv_file(tmp_path):
     assert transactions[0].currency == "PLN"
 
 
-def test_parse_transaction_raises_custom_error_for_invalid_amount():
+@pytest.mark.parametrize(
+    ("field", "invalid_value", "expected_message"),
+    [
+        ("amount", "not-a-number", "Invalid amount"),
+        ("transaction_date", "2026-99-99", "Invalid transaction date"),
+    ],
+)
+def test_parse_transaction_raises_custom_error_for_invalid_value(
+    field: str,
+    invalid_value: str,
+    expected_message: str,
+):
     row = {
         "transaction_id": "txn-001",
         "transaction_date": "2026-06-01",
         "description": "SPOTIFY",
-        "amount": "not-a-number",
+        "amount": "-23.99",
         "currency": "PLN",
         "account_id": "checking-pln",
     }
+    row[field] = invalid_value
 
-    with pytest.raises(TransactionParseError, match="Invalid amount"):
+    with pytest.raises(TransactionParseError, match=expected_message):
         parse_transaction(row)

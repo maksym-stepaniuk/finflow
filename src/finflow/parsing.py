@@ -9,15 +9,23 @@ from finflow.models import Transaction
 
 def parse_transaction(row: dict[str, str]) -> Transaction:
     raw_amount = row["amount"].strip()
+    raw_date = row["transaction_date"].strip()
 
     try:
         amount = Decimal(raw_amount)
     except InvalidOperation as error:
         raise TransactionParseError(f"Invalid amount: {raw_amount!r}") from error
 
+    try:
+        transaction_date = date.fromisoformat(raw_date)
+    except ValueError as error:
+        raise TransactionParseError(
+            f"Invalid transaction date: {raw_date!r}"
+        ) from error
+
     return Transaction(
         transaction_id=row["transaction_id"].strip(),
-        transaction_date=date.fromisoformat(row["transaction_date"].strip()),
+        transaction_date=transaction_date,
         description=row["description"].strip(),
         amount=amount,
         currency=row["currency"].strip().upper(),
