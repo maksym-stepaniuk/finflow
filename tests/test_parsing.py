@@ -43,11 +43,12 @@ def test_read_transactions_reads_csv_file(tmp_path):
         encoding="utf-8",
     )
 
-    transactions = read_transactions(csv_file)
+    result = read_transactions(csv_file)
 
-    assert len(transactions) == 1
-    assert transactions[0].amount == Decimal("-23.99")
-    assert transactions[0].currency == "PLN"
+    assert len(result.transactions) == 1
+    assert result.errors == []
+    assert result.transactions[0].amount == Decimal("-23.99")
+    assert result.transactions[0].currency == "PLN"
 
 
 @pytest.mark.parametrize(
@@ -67,3 +68,24 @@ def test_parse_transaction_raises_custom_error_for_invalid_value(
 
     with pytest.raises(TransactionParseError, match=expected_message):
         parse_transaction(transaction_row)
+
+
+def test_read_transactions_reports_invalid_rows(tmp_path):
+    csv_file = tmp_path / "transactions.csv"
+    csv_file.write_text(
+        "transaction_id,transaction_date,description,amount,currency,account_id\n"
+        "txn-001,2026-06-04,SPOTIFY,-23.99,PLN,checking-pln\n"
+        "txn-002,2026-07-04,invalid,not-a-number,PLN,checking-pln\n",
+        encoding="utf-8",
+    )
+
+    result = read_transactions(csv_file)
+
+    assert len(result.transactions) == 1
+    assert len(result.errors) == 1
+
+    rejected_row = result.errors[0]
+
+    assert rejected_row.reason == "Invalid amount: 'not-a-number'"
+    assert rejected_row.row_number == 3
+    assert rejected_row.row["transaction_id"] == "txn-002"

@@ -4,7 +4,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from finflow.exceptions import TransactionParseError
-from finflow.models import Transaction
+from finflow.models import ImportResult, RejectedRow, Transaction
 
 
 def parse_transaction(row: dict[str, str]) -> Transaction:
@@ -33,13 +33,28 @@ def parse_transaction(row: dict[str, str]) -> Transaction:
     )
 
 
-def read_transactions(file_path: Path) -> list[Transaction]:
+def read_transactions(file_path: Path) -> ImportResult:
     transactions: list[Transaction] = []
+    errors: list[RejectedRow] = []
 
     with file_path.open(encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
 
-        for row in reader:
-            transactions.append(parse_transaction(row))
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                transaction = parse_transaction(row)
+            except TransactionParseError as error:
+                errors.append(
+                    RejectedRow(
+                        reason=str(error),
+                        row_number=row_number,
+                        row=row,
+                    )
+                )
+            else:
+                transactions.append(transaction)
 
-    return transactions
+    return ImportResult(
+        transactions=transactions,
+        errors=errors,
+    )
