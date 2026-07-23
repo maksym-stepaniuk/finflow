@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from decimal import Decimal
 
@@ -89,3 +90,17 @@ def test_read_transactions_reports_invalid_rows(tmp_path):
     assert rejected_row.reason == "Invalid amount: 'not-a-number'"
     assert rejected_row.row_number == 3
     assert rejected_row.row["transaction_id"] == "txn-002"
+
+
+def test_read_transactions_logs_invalid_rows(tmp_path, caplog):
+    csv_file = tmp_path / "invalid_transactions.csv"
+    csv_file.write_text(
+        "transaction_id,transaction_date,description,amount,currency,account_id\n"
+        "txn-002,2026-07-04,invalid,not-a-number,PLN,checking-pln\n",
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(logging.WARNING, logger="finflow.parsing"):
+        read_transactions(csv_file)
+
+    assert "Rejected CSV row 2: Invalid amount: 'not-a-number'" in caplog.text
