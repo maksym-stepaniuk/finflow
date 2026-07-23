@@ -1,10 +1,13 @@
 import csv
+import logging
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from finflow.exceptions import TransactionParseError
 from finflow.models import ImportResult, RejectedRow, Transaction
+
+logger = logging.getLogger(__name__)
 
 
 def parse_transaction(row: dict[str, str]) -> Transaction:
@@ -44,9 +47,17 @@ def read_transactions(file_path: Path) -> ImportResult:
             try:
                 transaction = parse_transaction(row)
             except TransactionParseError as error:
+                reason = str(error)
+
+                logger.warning(
+                    "Rejected CSV row %d: %s",
+                    row_number,
+                    reason,
+                )
+
                 errors.append(
                     RejectedRow(
-                        reason=str(error),
+                        reason=reason,
                         row_number=row_number,
                         row=row,
                     )
