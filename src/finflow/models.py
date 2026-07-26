@@ -1,6 +1,12 @@
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from enum import StrEnum
+
+
+class Currency(StrEnum):
+    PLN = "PLN"
+    EUR = "EUR"
 
 
 @dataclass(frozen=True)
@@ -9,7 +15,7 @@ class Transaction:
     transaction_date: date
     description: str
     amount: Decimal
-    currency: str
+    currency: Currency
     account_id: str
 
 

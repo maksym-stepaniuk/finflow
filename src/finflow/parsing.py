@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from finflow.exceptions import TransactionParseError
-from finflow.models import ImportResult, RejectedRow, Transaction
+from finflow.models import Currency, ImportResult, RejectedRow, Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 def parse_transaction(row: dict[str, str]) -> Transaction:
     raw_amount = row["amount"].strip()
     raw_date = row["transaction_date"].strip()
+    raw_currency = row["currency"].strip().upper()
+
+    try:
+        currency = Currency(raw_currency)
+    except ValueError as error:
+        raise TransactionParseError(
+            f"Unsupported currency: {raw_currency!r}"
+        ) from error
 
     try:
         amount = Decimal(raw_amount)
@@ -31,7 +39,7 @@ def parse_transaction(row: dict[str, str]) -> Transaction:
         transaction_date=transaction_date,
         description=row["description"].strip(),
         amount=amount,
-        currency=row["currency"].strip().upper(),
+        currency=currency,
         account_id=row["account_id"].strip(),
     )
 
