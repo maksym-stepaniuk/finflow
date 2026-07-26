@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 from finflow.exceptions import TransactionParseError
-from finflow.models import Transaction
+from finflow.models import Currency, Transaction
 from finflow.parsing import parse_transaction, read_transactions
 
 
@@ -31,7 +31,7 @@ def test_parse_transaction_converts_csv_row_to_transaction(
         transaction_date=date(2026, 6, 1),
         description="SPOTIFY",
         amount=Decimal("-23.99"),
-        currency="PLN",
+        currency=Currency.PLN,
         account_id="checking-pln",
     )
 
@@ -49,7 +49,7 @@ def test_read_transactions_reads_csv_file(tmp_path):
     assert len(result.transactions) == 1
     assert result.errors == []
     assert result.transactions[0].amount == Decimal("-23.99")
-    assert result.transactions[0].currency == "PLN"
+    assert result.transactions[0].currency is Currency.PLN
 
 
 @pytest.mark.parametrize(
@@ -57,6 +57,7 @@ def test_read_transactions_reads_csv_file(tmp_path):
     [
         ("amount", "not-a-number", "Invalid amount"),
         ("transaction_date", "2026-99-99", "Invalid transaction date"),
+        ("currency", "GBP", "Unsupported currency"),
     ],
 )
 def test_parse_transaction_raises_custom_error_for_invalid_value(
