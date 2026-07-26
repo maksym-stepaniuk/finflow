@@ -10,6 +10,14 @@ class Currency(StrEnum):
 
 
 @dataclass(frozen=True)
+class ExchangeRate:
+    base_currency: Currency
+    quote_currency: Currency
+    rate: Decimal
+    effective_date: date
+
+
+@dataclass(frozen=True)
 class Transaction:
     transaction_id: str
     transaction_date: date
