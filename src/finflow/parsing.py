@@ -10,10 +10,22 @@ from finflow.models import Currency, ImportResult, RejectedRow, Transaction
 logger = logging.getLogger(__name__)
 
 
+def _validate_required_field(row: dict[str, str], field: str) -> str:
+    value = row.get(field)
+
+    if value is None or not value.strip():
+        raise TransactionParseError(f"Missing required field: {field}")
+
+    return value.strip()
+
+
 def parse_transaction(row: dict[str, str]) -> Transaction:
-    raw_amount = row["amount"].strip()
-    raw_date = row["transaction_date"].strip()
-    raw_currency = row["currency"].strip().upper()
+    transaction_id = _validate_required_field(row, "transaction_id")
+    raw_date = _validate_required_field(row, "transaction_date")
+    description = _validate_required_field(row, "description")
+    raw_amount = _validate_required_field(row, "amount")
+    raw_currency = _validate_required_field(row, "currency").upper()
+    account_id = _validate_required_field(row, "account_id")
 
     try:
         currency = Currency(raw_currency)
@@ -35,12 +47,12 @@ def parse_transaction(row: dict[str, str]) -> Transaction:
         ) from error
 
     return Transaction(
-        transaction_id=row["transaction_id"].strip(),
+        transaction_id=transaction_id,
         transaction_date=transaction_date,
-        description=row["description"].strip(),
+        description=description,
         amount=amount,
         currency=currency,
-        account_id=row["account_id"].strip(),
+        account_id=account_id,
     )
 
 

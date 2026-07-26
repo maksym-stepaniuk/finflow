@@ -58,6 +58,7 @@ def test_read_transactions_reads_csv_file(tmp_path):
         ("amount", "not-a-number", "Invalid amount"),
         ("transaction_date", "2026-99-99", "Invalid transaction date"),
         ("currency", "GBP", "Unsupported currency"),
+        ("transaction_id", " ", "Missing required field: transaction_id"),
     ],
 )
 def test_parse_transaction_raises_custom_error_for_invalid_value(
