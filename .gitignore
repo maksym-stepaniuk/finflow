@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Windows download metadata
+*:Zone.Identifier
+
 # C extensions
 *.so
 
